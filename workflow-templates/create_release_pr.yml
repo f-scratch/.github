@@ -37,14 +37,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if stg01_pr_exists
-        id: check_stg01_to_prd
+        id: check_stg01_to_rc
         if: ${{ github.ref_name == 'release-stg01' }}
-        run: echo "::set-output name=count::$(gh pr list -B release-prd -H release-stg01 | wc -l)"
+        run: echo "::set-output name=count::$(gh pr list -B release-rc -H release-stg01 | wc -l)"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
-      - name: create stg01 to prd pr
-        if: ${{ github.ref_name == 'release-stg01' && steps.check_stg01_to_prd.outputs.count == 0 }}
-        run: gh pr create -d -B "release-prd" -H "release-stg01" -l PRD -t "stg01 to prd" -b ""
+      - name: create stg01 to rc pr
+        if: ${{ github.ref_name == 'release-stg01' && steps.check_stg01_to_rc.outputs.count == 0 }}
+        run: gh pr create -d -B "release-rc" -H "release-stg01" -l RC -t "stg01 to rc (🔥 Hotfix/yyyymmdd or 🚋 SprintXX)" -F .github/PULL_REQUEST_TEMPLATE/release_procedure.md
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if prd_pr_exists
