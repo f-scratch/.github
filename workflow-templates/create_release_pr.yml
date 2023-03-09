@@ -54,6 +54,17 @@ jobs:
         run: gh pr create -B "release-stg" -H github.ref_name -l STG cycle -t "github.ref_name to stg" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if to develop exists
+        id: check_deveop_exists
+        if: ${{ !conteins(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
+        run: echo "::set-output name=count::$(gh pr list -B develop -H github.ref_name | wc -l)"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create to develop pr
+        if: ${{ steps.check_deveop_exists.outputs.count == 0 }}
+        run: gh pr create -B develop -H github.ref_name -l dev cycle -t "github.ref_name to dev" -b ""
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if stg_pr_exists
         id: check_stg_to_stg01
         if: ${{ github.ref_name == 'release-stg' }}
