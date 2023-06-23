@@ -1,0 +1,33 @@
+name: operate test branches
+on:
+  schedule:
+    - cron: '0 0 * * *' # 日本時間で毎朝9:00に実行する
+  workflow_dispatch:
+jobs:
+  operateTestBranches:
+    name: operate-test-branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: get date
+        id: get_date
+        run: |
+          echo "today_date=$(date '+%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "last_week_date=$(date '+%Y%m%d' --date '7 day ago')" >> $GITHUB_OUTPUT
+      - name: git setting
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://github-actions[bot]:${{ secrets.BUNDLE_GITHUB__COM }}@github.com/${{ github.repository }}
+      - name: delete past test branches
+        continue-on-error: true
+        run: |
+          git fetch -p
+          git branch -a -r --list 'origin/test/it-*' | sed -e "s/.*origin\///" | sort | awk '{ if ($1 < "test/it-${{ steps.get_date.outputs.last_week_date }}") print }' | xargs git push origin --delete
+      - name: create todays test branch
+        run: |
+          git checkout -b test/it-${{ steps.get_date.outputs.today_date }} origin/develop
+          git push origin test/it-${{ steps.get_date.outputs.today_date }}
