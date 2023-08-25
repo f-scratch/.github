@@ -3,6 +3,12 @@ on:
   pull_request:
     types:
       - opened
+    branches:
+      - 'develop**'
+      - release-stg
+      - release-stg01
+      - release-rc
+      - release-prd
 jobs:
   add-to-project:
     name: Add pr to project
