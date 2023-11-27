@@ -46,23 +46,23 @@ jobs:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if to stg exists
         id: check_release_stg_exists
-        if: ${{ !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
         run: echo "::set-output name=count::$(gh pr list -B release-stg -H ${{ github.ref_name }} | wc -l)"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: create to stg pr
-        if: ${{ !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_release_stg_exists.outputs.count == 0 }}
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_release_stg_exists.outputs.count == 0 }}
         run: gh pr create -B "release-stg" -H ${{ github.ref_name }} -l STG,cycle -t "${{ github.ref_name }} to stg" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if to develop exists
-        id: check_deveop_exists
-        if: ${{ !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
+        id: check_develop_exists
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
         run: echo "::set-output name=count::$(gh pr list -B develop -H ${{ github.ref_name }} | wc -l)"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: create to develop pr
-        if: ${{ !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_deveop_exists.outputs.count == 0 }}
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_develop_exists.outputs.count == 0 }}
         run: gh pr create -B develop -H ${{ github.ref_name }} -l dev,cycle -t "${{ github.ref_name }} to dev" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
@@ -74,7 +74,7 @@ jobs:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: create stg to stg01 pr
         if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
-        run: gh pr create -B "release-stg01" -H "release-stg" -l UT -t "stg to stg01" -b ""
+        run: gh pr create -B "release-stg01" -H "release-stg" -l UT -t "stg to stg01" -F .github/PULL_REQUEST_TEMPLATE/release_procedure.md
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if stg01_pr_exists
@@ -85,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: create stg01 to rc pr
         if: ${{ github.ref_name == 'release-stg01' && steps.check_stg01_to_rc.outputs.count == 0 }}
-        run: gh pr create -d -B "release-rc" -H "release-stg01" -l RC -t "stg01 to rc (🔥 Hotfix/yyyymmdd or 🚋 SprintXX)" -F .github/PULL_REQUEST_TEMPLATE/release_procedure.md
+        run: gh pr create -B "release-rc" -H "release-stg01" -l RC -t "🔥 stg01 to rc" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if prd_pr_exists
