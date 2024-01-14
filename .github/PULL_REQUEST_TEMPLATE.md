@@ -12,6 +12,11 @@ XXX | XXXXX
 <!-- 仕様書リンク -->
 <!-- 設計書リンク -->
 
+## 開発ポイント
+<!-- 開発ポイント付与対象の場合必須 -->
+<!-- 提出しているPRに該当する行へのリンクを記載する -->
+<!-- https://docs.google.com/spreadsheets/d/1VUcrV6YuZZ6svrF9Yk55uqM4h1DoldsQfihb1KShDDo/edit#gid=1456783281 -->
+
 ## 対応内容
 <!-- 必須 -->
 <!-- 新規開発の場合、対応した内容を箇条書きで記載する -->
