@@ -98,6 +98,8 @@ jobs:
         id: check_prd_to_dev
         if: ${{ github.ref_name == 'release-prd' }}
         run: echo "::set-output name=count::$(gh pr list -B ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }} -H release-prd | wc -l)"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: create prd to dev pr
         if: ${{ github.ref_name == 'release-prd' && steps.check_prd_to_dev.outputs.count == 0 }}
         run: gh pr create -B ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }} -H "release-prd" -l dev,cycle -t "prd to dev" -b ""
