@@ -88,14 +88,18 @@ jobs:
         run: gh pr create -B "release-rc" -H "release-stg01" -l RC -t "🔥 stg01 to rc" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
-      - name: check if prd_pr_exists
-        id: check_prd_to_dev
+      - name: get oldest develop branch
+        id: get_oldest_develop_branch
         if: ${{ github.ref_name == 'release-prd' }}
-        run: echo "::set-output name=count::$(gh pr list -B develop -H release-prd | wc -l)"
+        run: echo "::set-output name=oldest_develop_branch::$(branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep 'develop_[0-9]\{8\}' | sort | head -n 1) && [[ -z \"$branch\" ]] && echo 'develop' || echo \"$branch\")"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if prd to dev pr exists
+        id: check_prd_to_dev
+        if: ${{ github.ref_name == 'release-prd' }}
+        run: echo "::set-output name=count::$(gh pr list -B ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }} -H release-prd | wc -l)"
       - name: create prd to dev pr
         if: ${{ github.ref_name == 'release-prd' && steps.check_prd_to_dev.outputs.count == 0 }}
-        run: gh pr create -B "develop" -H "release-prd" -l dev -t "prd to dev" -b ""
+        run: gh pr create -B ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }} -H "release-prd" -l dev,cycle -t "prd to dev" -b ""
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
