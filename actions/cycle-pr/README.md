@@ -104,11 +104,6 @@ on:
         description: 処理するブランチ（省略時は実行対象ブランチ）
         required: false
         type: string
-      dry_run:
-        description: Pull Requestを作成せず、作成予定だけを確認する
-        required: false
-        type: boolean
-        default: false
   push:
     branches:
       - develop
@@ -124,7 +119,6 @@ jobs:
     uses: f-scratch/.github/.github/workflows/cycle-pr.yml@master
     with:
       source_branch: ${{ inputs.source_branch || github.ref_name }}
-      dry_run: ${{ inputs.dry_run || false }}
 ```
 
 push対象のブランチに対応する経路が設定されていない場合は、何も作成せず正常終了します。
@@ -138,7 +132,3 @@ push対象のブランチに対応する経路が設定されていない場合�
 - pushされたブランチに対応する経路が設定されていない
 
 設定された取り込み先ブランチや必須ラベルが存在しない場合は、設定ミスとして失敗します。
-
-## dry-run
-
-手動実行で`dry_run`を有効にすると、Pull Requestを作成せず、作成予定と作成しない理由をジョブの概要へ出力します。

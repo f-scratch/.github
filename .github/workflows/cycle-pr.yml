@@ -12,12 +12,6 @@ on:
         required: false
         default: .github/cycle-pr.yml
         type: string
-      dry_run:
-        description: Pull Requestを作成せず、作成予定だけを出力する
-        required: false
-        default: false
-        type: boolean
-
 jobs:
   cycle-pr:
     runs-on: ubuntu-latest
@@ -34,4 +28,3 @@ jobs:
           token: ${{ github.token }}
           source-branch: ${{ inputs.source_branch }}
           config-path: ${{ inputs.config_path }}
-          dry-run: ${{ inputs.dry_run }}

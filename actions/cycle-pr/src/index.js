@@ -146,7 +146,6 @@ async function run() {
   const token = core.getInput("token", { required: true });
   const sourceBranch = core.getInput("source-branch", { required: true });
   const configPath = core.getInput("config-path") || ".github/cycle-pr.yml";
-  const dryRun = core.getBooleanInput("dry-run");
   const { owner, repo } = github.context.repo;
   const octokit = github.getOctokit(token);
 
@@ -200,11 +199,6 @@ async function run() {
       rows.push(resultRow(plan, "差分なし"));
       continue;
     }
-    if (dryRun) {
-      rows.push(resultRow(plan, "作成予定"));
-      continue;
-    }
-
     const pullRequest = await createPullRequest(octokit, owner, repo, plan);
     if (pullRequest) {
       createdCount += 1;
@@ -216,7 +210,7 @@ async function run() {
 
   core.setOutput("created-count", createdCount);
   await core.summary
-    .addHeading(dryRun ? "Cycle PR dry-run" : "Cycle PR")
+    .addHeading("Cycle PR")
     .addTable([
       [
         { data: "経路", header: true },
