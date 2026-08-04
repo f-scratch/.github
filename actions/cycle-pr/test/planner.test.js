@@ -28,6 +28,136 @@ const branches = [
   "release-prd",
 ];
 
+test("dx-kpieeのブランチ構成で全経路を計画する", () => {
+  const dxKpieeBranches = [
+    "develop",
+    "develop_sprint19.0",
+    "develop_sprint19.1",
+    "integration/sprint19",
+    "integration/sprint20",
+    "release-stg",
+    "release-stg01",
+    "release-prd",
+  ];
+  const cases = [
+    [
+      "develop_sprint19.0",
+      [
+        [
+          "sprint-forward",
+          "develop_sprint19.0",
+          "develop_sprint19.1",
+          ["IT", "cycle"],
+          null,
+        ],
+        [
+          "previous-sprint-to-stg01",
+          "develop_sprint19.0",
+          "release-stg01",
+          ["UT", "cycle"],
+          null,
+        ],
+      ],
+    ],
+    [
+      "develop_sprint19.1",
+      [
+        [
+          "latest-sprint-to-release",
+          "develop_sprint19.1",
+          "release-stg",
+          ["STG", "cycle"],
+          null,
+        ],
+        [
+          "latest-sprint-to-trunk",
+          "develop_sprint19.1",
+          "develop",
+          ["IT", "cycle"],
+          null,
+        ],
+      ],
+    ],
+    [
+      "develop",
+      [
+        [
+          "trunk-to-latest-integration",
+          "develop",
+          "integration/sprint20",
+          ["integration"],
+          null,
+        ],
+      ],
+    ],
+    [
+      "integration/sprint19",
+      [
+        [
+          "integration-forward",
+          "integration/sprint19",
+          "integration/sprint20",
+          ["integration"],
+          null,
+        ],
+      ],
+    ],
+    ["integration/sprint20", []],
+    [
+      "release-stg",
+      [
+        [
+          "stg-to-stg01",
+          "release-stg",
+          "release-stg01",
+          ["UT", "cycle"],
+          ".github/release_procedure.md",
+        ],
+      ],
+    ],
+    [
+      "release-stg01",
+      [
+        [
+          "stg01-to-prd",
+          "release-stg01",
+          "release-prd",
+          ["PRD", "cycle"],
+          null,
+        ],
+      ],
+    ],
+    [
+      "release-prd",
+      [
+        [
+          "prd-to-trunk",
+          "release-prd",
+          "develop",
+          ["dev", "cycle"],
+          null,
+        ],
+      ],
+    ],
+  ];
+
+  for (const [sourceBranch, expected] of cases) {
+    const actual = planPullRequests({
+      config: fullConfig,
+      branches: dxKpieeBranches,
+      sourceBranch,
+    }).map(({ id, head, base, labels, bodyFile }) => [
+      id,
+      head,
+      base,
+      labels,
+      bodyFile ?? null,
+    ]);
+
+    assert.deepEqual(actual, expected, sourceBranch);
+  }
+});
+
 test("前のSprintから次のSprintとstg01を計画する", () => {
   const plans = planPullRequests({
     config: fullConfig,
