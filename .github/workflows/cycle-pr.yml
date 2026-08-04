@@ -2,21 +2,11 @@ name: Cycle PR
 
 on:
   workflow_call:
-    inputs:
-      source_branch:
-        description: 今回処理する起点ブランチ
-        required: true
-        type: string
-      config_path:
-        description: 呼び出し元リポジトリの既定ブランチに置く設定ファイル
-        required: false
-        default: .github/cycle-pr.yml
-        type: string
 jobs:
   cycle-pr:
     runs-on: ubuntu-latest
     concurrency:
-      group: cycle-pr-${{ github.repository }}-${{ inputs.source_branch }}
+      group: cycle-pr-${{ github.repository }}-${{ github.ref_name }}
       cancel-in-progress: false
     permissions:
       contents: read
@@ -26,5 +16,4 @@ jobs:
         uses: f-scratch/.github/actions/cycle-pr@master
         with:
           token: ${{ github.token }}
-          source-branch: ${{ inputs.source_branch }}
-          config-path: ${{ inputs.config_path }}
+          source-branch: ${{ github.ref_name }}

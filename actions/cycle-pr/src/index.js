@@ -145,7 +145,6 @@ function resultRow(plan, result, url = "") {
 async function run() {
   const token = core.getInput("token", { required: true });
   const sourceBranch = core.getInput("source-branch", { required: true });
-  const configPath = core.getInput("config-path") || ".github/cycle-pr.yml";
   const { owner, repo } = github.context.repo;
   const octokit = github.getOctokit(token);
 
@@ -155,7 +154,7 @@ async function run() {
     octokit,
     owner,
     repo,
-    configPath,
+    ".github/cycle-pr.yml",
     defaultBranch,
   );
   const config = parseConfig(configSource);

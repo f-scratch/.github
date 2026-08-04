@@ -99,11 +99,6 @@ name: Cycle PR
 
 on:
   workflow_dispatch:
-    inputs:
-      source_branch:
-        description: 処理するブランチ（省略時は実行対象ブランチ）
-        required: false
-        type: string
   push:
     branches:
       - develop
@@ -117,11 +112,10 @@ jobs:
       contents: read
       pull-requests: write
     uses: f-scratch/.github/.github/workflows/cycle-pr.yml@master
-    with:
-      source_branch: ${{ inputs.source_branch || github.ref_name }}
 ```
 
 push対象のブランチに対応する経路が設定されていない場合は、何も作成せず正常終了します。
+手動実行では、GitHubのブランチ選択欄で処理するブランチを選びます。
 
 ## Pull Requestを作らない場合
 
