@@ -134,7 +134,7 @@ export function planPullRequests({ config, branches, sourceBranch }) {
           "trunk-to-latest-integration",
           sourceBranch,
           latestIntegration,
-          ["integration"],
+          ["integration", "cycle"],
           "基準ブランチの変更を最新のintegrationブランチへ取り込むため、自動作成されたPull Requestです。",
         ),
       );
@@ -148,7 +148,7 @@ export function planPullRequests({ config, branches, sourceBranch }) {
           "integration-forward",
           sourceBranch,
           nextIntegration,
-          ["integration"],
+          ["integration", "cycle"],
           "前のintegrationブランチの変更を次へ引き継ぐため、自動作成されたPull Requestです。",
         ),
       );
