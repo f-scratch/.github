@@ -1,0 +1,31 @@
+name: Cycle PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 処理するブランチ（省略時は実行対象ブランチ）
+        required: false
+        type: string
+      dry_run:
+        description: Pull Requestを作成せず、作成予定だけを確認する
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+      - develop
+      - develop_sprint*
+      - integration/sprint*
+      - release-*
+
+jobs:
+  cycle-pr:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: f-scratch/.github/.github/workflows/cycle-pr.yml@master
+    with:
+      source_branch: ${{ inputs.source_branch || github.ref_name }}
+      dry_run: ${{ inputs.dry_run || false }}

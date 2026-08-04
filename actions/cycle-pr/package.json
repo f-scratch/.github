@@ -1,0 +1,19 @@
+{
+  "name": "@f-scratch/cycle-pr-action",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist --minify",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.1",
+    "@actions/github": "9.1.1",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "0.44.1"
+  }
+}
