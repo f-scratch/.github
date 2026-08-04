@@ -1,0 +1,19 @@
+name: Cycle PR
+description: 設定したSprint・integration・releaseブランチ間に不足しているPRを作成する
+
+inputs:
+  token:
+    description: PRの参照と作成に使用するGitHub token
+    required: true
+  source-branch:
+    description: 今回処理する起点ブランチ
+    required: true
+outputs:
+  created-count:
+    description: 作成したPRの件数
+  planned-count:
+    description: 起点ブランチから作成対象になったPR経路の件数
+
+runs:
+  using: node24
+  main: dist/index.js

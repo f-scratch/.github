@@ -1,0 +1,4 @@
+{
+  "name": "Cycle PR",
+  "description": "Sprint、integration、releaseブランチ間に必要なPull Requestを作成します。"
+}
