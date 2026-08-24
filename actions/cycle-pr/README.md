@@ -18,6 +18,8 @@ Cycle PRは、Sprintブランチ、integrationブランチ、リリースブラ�
 
 Cycle PRは、Pull Requestのマージ、競合解消、ブランチの作成や削除、既存Pull Requestの書き換えを行いません。最新integrationから`trunk`へ戻すPull Requestも、Sprintの完了判断を伴うため自動作成しません。
 
+作成するすべてのPull Requestには`cycle`ラベルを付けます。integration経路には`integration`ラベルも付けます。
+
 ## 設定
 
 呼び出し元リポジトリの既定ブランチに`.github/cycle-pr.yml`を置きます。
