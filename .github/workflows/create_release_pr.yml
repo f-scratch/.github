@@ -1,0 +1,167 @@
+name: create release pr
+on:
+  workflow_call:
+    inputs:
+      release-procedure-template:
+        description: Path in the caller repository to the release procedure template.
+        required: true
+        type: string
+      release-contingency-template:
+        description: Optional path in the caller repository to the release contingency template.
+        required: false
+        type: string
+        default: .github/PULL_REQUEST_TEMPLATE/release_contigency.md
+jobs:
+  gitPrRelease:
+    name: git-pr-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: check if next develop exists
+        id: check_next_develop_exists
+        if: ${{ startsWith(github.ref_name, 'develop_') }}
+        run: |
+          next_develop_branch=$(git branch -a -r --list 'origin/develop_*' | grep -2 "$SOURCE_BRANCH" | sed -e 's/.*origin\///' | sort | grep -A 1 "$SOURCE_BRANCH" | grep -v "$SOURCE_BRANCH" || true)
+          echo "next_develop_branch=$next_develop_branch" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: get oldest develop branch (for stg01)
+        id: get_oldest_develop_branch_for_stg01
+        if: ${{ startsWith(github.ref_name, 'develop_') && steps.check_next_develop_exists.outputs.next_develop_branch }}
+        run: |
+          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep 'develop_[0-9]\{8\}' | sort | head -n 1)
+          echo "oldest_develop_branch=$branch" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if to release-stg01 exists
+        id: check_release_stg01_exists
+        if: ${{ steps.get_oldest_develop_branch_for_stg01.outputs.oldest_develop_branch == github.ref_name }}
+        run: |
+          count=$(gh pr list --limit 1 -B release-stg01 -H "$SOURCE_BRANCH" --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create to release-stg01 pr
+        if: ${{ steps.get_oldest_develop_branch_for_stg01.outputs.oldest_develop_branch == github.ref_name && steps.check_release_stg01_exists.outputs.count == 0 }}
+        run: gh pr create -B release-stg01 -H "$SOURCE_BRANCH" -l UT,cycle -t "$SOURCE_BRANCH to release-stg01" -b ""
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if to next develop exists
+        id: check_to_next_develop_exists
+        if: ${{ steps.check_next_develop_exists.outputs.next_develop_branch }}
+        run: |
+          count=$(gh pr list --limit 1 -B "$TARGET_BRANCH" -H "$SOURCE_BRANCH" --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          TARGET_BRANCH: ${{ steps.check_next_develop_exists.outputs.next_develop_branch }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create to next develop pr
+        if: ${{ steps.check_next_develop_exists.outputs.next_develop_branch && steps.check_to_next_develop_exists.outputs.count == 0 }}
+        run: |
+          gh pr create -B "$TARGET_BRANCH" -H "$SOURCE_BRANCH" -l dev,cycle -t "$SOURCE_BRANCH to $TARGET_BRANCH" -b ""
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          TARGET_BRANCH: ${{ steps.check_next_develop_exists.outputs.next_develop_branch }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if to stg exists
+        id: check_release_stg_exists
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
+        run: |
+          count=$(gh pr list --limit 1 -B release-stg -H "$SOURCE_BRANCH" --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create to stg pr
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_release_stg_exists.outputs.count == 0 }}
+        run: gh pr create -B release-stg -H "$SOURCE_BRANCH" -l STG,cycle -t "$SOURCE_BRANCH to stg" -b ""
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if to develop exists
+        id: check_deveop_exists
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') }}
+        run: |
+          count=$(gh pr list --limit 1 -B develop -H "$SOURCE_BRANCH" --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create to develop pr
+        if: ${{ startsWith(github.ref_name, 'develop_') && !contains(steps.check_next_develop_exists.outputs.next_develop_branch, 'develop') && steps.check_deveop_exists.outputs.count == 0 }}
+        run: gh pr create -B develop -H "$SOURCE_BRANCH" -l dev,cycle -t "$SOURCE_BRANCH to dev" -b ""
+        env:
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if stg_pr_exists
+        id: check_stg_to_stg01
+        if: ${{ github.ref_name == 'release-stg' }}
+        run: |
+          count=$(gh pr list --limit 1 -B release-stg01 -H release-stg --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: validate release templates
+        if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
+        env:
+          RELEASE_PROCEDURE_TEMPLATE: ${{ inputs.release-procedure-template }}
+        run: |
+          test -f "$RELEASE_PROCEDURE_TEMPLATE"
+      - name: create stg to stg01 pr
+        if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+          RELEASE_PROCEDURE_TEMPLATE: ${{ inputs.release-procedure-template }}
+          RELEASE_CONTINGENCY_TEMPLATE: ${{ inputs.release-contingency-template }}
+        run: |
+          pr_url=$(gh pr create -B "release-stg01" -H "release-stg" -l UT -t "stg to stg01" -F "$RELEASE_PROCEDURE_TEMPLATE")
+          pr_number="${pr_url##*/}"
+          if [[ -f "$RELEASE_CONTINGENCY_TEMPLATE" ]]; then
+            gh pr comment "$pr_number" -F "$RELEASE_CONTINGENCY_TEMPLATE"
+          fi
+      - name: check if stg01_pr_exists
+        id: check_stg01_to_rc
+        if: ${{ github.ref_name == 'release-stg01' }}
+        run: |
+          count=$(gh pr list --limit 1 -B release-rc -H release-stg01 --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create stg01 to rc pr
+        if: ${{ github.ref_name == 'release-stg01' && steps.check_stg01_to_rc.outputs.count == 0 }}
+        run: gh pr create -B "release-rc" -H "release-stg01" -l RC -t "🔥 stg01 to rc" -b ""
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: get oldest develop branch
+        id: get_oldest_develop_branch
+        if: ${{ github.ref_name == 'release-prd' }}
+        run: |
+          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep 'develop_[0-9]\{8\}' | sort | head -n 1)
+          echo "oldest_develop_branch=${branch:-develop}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: check if prd to dev pr exists
+        id: check_prd_to_dev
+        if: ${{ github.ref_name == 'release-prd' }}
+        run: |
+          count=$(gh pr list --limit 1 -B "$TARGET_BRANCH" -H release-prd --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          TARGET_BRANCH: ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: create prd to dev pr
+        if: ${{ github.ref_name == 'release-prd' && steps.check_prd_to_dev.outputs.count == 0 }}
+        run: gh pr create -B "$TARGET_BRANCH" -H release-prd -l dev,cycle -t "prd to dev" -b ""
+        env:
+          TARGET_BRANCH: ${{ steps.get_oldest_develop_branch.outputs.oldest_develop_branch }}
+          GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}

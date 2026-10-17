@@ -1,0 +1,4 @@
+{
+  "name": "Create Release PR",
+  "description": "develop・stg・stg01・prd間のリリースPull Requestを作成します。release_procedure.mdが必要です。"
+}

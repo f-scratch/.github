@@ -1,0 +1,21 @@
+name: create release pr
+
+on:
+  push:
+    branches:
+      - 'develop**'
+      - release-stg
+      - release-stg01
+      - release-prd
+
+jobs:
+  gitPrRelease:
+    name: git-pr-release
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: f-scratch/.github/.github/workflows/create_release_pr.yml@master
+    with:
+      release-procedure-template: .github/PULL_REQUEST_TEMPLATE/release_procedure.md
+      release-contingency-template: .github/PULL_REQUEST_TEMPLATE/release_contigency.md
+    secrets: inherit
