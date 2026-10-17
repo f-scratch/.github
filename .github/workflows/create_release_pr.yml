@@ -7,9 +7,10 @@ on:
         required: true
         type: string
       release-contingency-template:
-        description: Path in the caller repository to the release contingency template.
-        required: true
+        description: Optional path in the caller repository to the release contingency template.
+        required: false
         type: string
+        default: .github/PULL_REQUEST_TEMPLATE/release_contigency.md
 jobs:
   gitPrRelease:
     name: git-pr-release
@@ -117,7 +118,6 @@ jobs:
           RELEASE_CONTINGENCY_TEMPLATE: ${{ inputs.release-contingency-template }}
         run: |
           test -f "$RELEASE_PROCEDURE_TEMPLATE"
-          test -f "$RELEASE_CONTINGENCY_TEMPLATE"
       - name: create stg to stg01 pr
         if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
         env:
@@ -127,7 +127,9 @@ jobs:
         run: |
           pr_url=$(gh pr create -B "release-stg01" -H "release-stg" -l UT -t "stg to stg01" -F "$RELEASE_PROCEDURE_TEMPLATE")
           pr_number="${pr_url##*/}"
-          gh pr comment "$pr_number" -F "$RELEASE_CONTINGENCY_TEMPLATE"
+          if [[ -f "$RELEASE_CONTINGENCY_TEMPLATE" ]]; then
+            gh pr comment "$pr_number" -F "$RELEASE_CONTINGENCY_TEMPLATE"
+          fi
       - name: check if stg01_pr_exists
         id: check_stg01_to_rc
         if: ${{ github.ref_name == 'release-stg01' }}
