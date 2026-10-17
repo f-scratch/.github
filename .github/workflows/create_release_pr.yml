@@ -27,7 +27,7 @@ jobs:
         id: check_next_develop_exists
         if: ${{ startsWith(github.ref_name, 'develop_') }}
         run: |
-          next_develop_branch=$(git branch -a -r --list 'origin/develop_*' | grep -2 "$SOURCE_BRANCH" | sed -e 's/.*origin\///' | sort | grep -A 1 "$SOURCE_BRANCH" | grep -v "$SOURCE_BRANCH")
+          next_develop_branch=$(git branch -a -r --list 'origin/develop_*' | grep -2 "$SOURCE_BRANCH" | sed -e 's/.*origin\///' | sort | grep -A 1 "$SOURCE_BRANCH" | grep -v "$SOURCE_BRANCH" || true)
           echo "next_develop_branch=$next_develop_branch" >> "$GITHUB_OUTPUT"
         env:
           SOURCE_BRANCH: ${{ github.ref_name }}
@@ -115,7 +115,6 @@ jobs:
         if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
         env:
           RELEASE_PROCEDURE_TEMPLATE: ${{ inputs.release-procedure-template }}
-          RELEASE_CONTINGENCY_TEMPLATE: ${{ inputs.release-contingency-template }}
         run: |
           test -f "$RELEASE_PROCEDURE_TEMPLATE"
       - name: create stg to stg01 pr
