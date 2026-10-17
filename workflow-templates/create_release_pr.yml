@@ -17,4 +17,5 @@ jobs:
     uses: f-scratch/.github/.github/workflows/create_release_pr.yml@master
     with:
       release-procedure-template: .github/PULL_REQUEST_TEMPLATE/release_procedure.md
+      release-contingency-template: .github/PULL_REQUEST_TEMPLATE/release_contigency.md
     secrets: inherit

@@ -7,10 +7,9 @@ on:
         required: true
         type: string
       release-contingency-template:
-        description: Optional path in the caller repository to the release contingency template.
-        required: false
+        description: Path in the caller repository to the release contingency template.
+        required: true
         type: string
-        default: ''
 jobs:
   gitPrRelease:
     name: git-pr-release
@@ -23,21 +22,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: validate release templates
-        env:
-          RELEASE_PROCEDURE_TEMPLATE: ${{ inputs.release-procedure-template }}
-          RELEASE_CONTINGENCY_TEMPLATE: ${{ inputs.release-contingency-template }}
-        run: |
-          test -f "$RELEASE_PROCEDURE_TEMPLATE"
-          if [[ -n "$RELEASE_CONTINGENCY_TEMPLATE" && ! -f "$RELEASE_CONTINGENCY_TEMPLATE" ]]; then
-            echo "Release contingency template does not exist: $RELEASE_CONTINGENCY_TEMPLATE" >&2
-            exit 1
-          fi
       - name: check if next develop exists
         id: check_next_develop_exists
         if: ${{ startsWith(github.ref_name, 'develop_') }}
         run: |
-          next_develop_branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | sort | awk -v branch="$SOURCE_BRANCH" '$0 == branch { getline; print; exit }')
+          next_develop_branch=$(git branch -a -r --list 'origin/develop_*' | grep -2 "$SOURCE_BRANCH" | sed -e 's/.*origin\///' | sort | grep -A 1 "$SOURCE_BRANCH" | grep -v "$SOURCE_BRANCH")
           echo "next_develop_branch=$next_develop_branch" >> "$GITHUB_OUTPUT"
         env:
           SOURCE_BRANCH: ${{ github.ref_name }}
@@ -121,6 +110,14 @@ jobs:
           echo "count=$count" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
+      - name: validate release templates
+        if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
+        env:
+          RELEASE_PROCEDURE_TEMPLATE: ${{ inputs.release-procedure-template }}
+          RELEASE_CONTINGENCY_TEMPLATE: ${{ inputs.release-contingency-template }}
+        run: |
+          test -f "$RELEASE_PROCEDURE_TEMPLATE"
+          test -f "$RELEASE_CONTINGENCY_TEMPLATE"
       - name: create stg to stg01 pr
         if: ${{ github.ref_name == 'release-stg' && steps.check_stg_to_stg01.outputs.count == 0 }}
         env:
@@ -130,9 +127,7 @@ jobs:
         run: |
           pr_url=$(gh pr create -B "release-stg01" -H "release-stg" -l UT -t "stg to stg01" -F "$RELEASE_PROCEDURE_TEMPLATE")
           pr_number="${pr_url##*/}"
-          if [[ -n "$RELEASE_CONTINGENCY_TEMPLATE" ]]; then
-            gh pr comment "$pr_number" -F "$RELEASE_CONTINGENCY_TEMPLATE"
-          fi
+          gh pr comment "$pr_number" -F "$RELEASE_CONTINGENCY_TEMPLATE"
       - name: check if stg01_pr_exists
         id: check_stg01_to_rc
         if: ${{ github.ref_name == 'release-stg01' }}
