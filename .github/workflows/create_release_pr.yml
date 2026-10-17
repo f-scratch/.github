@@ -35,8 +35,8 @@ jobs:
         id: get_oldest_develop_branch_for_stg01
         if: ${{ startsWith(github.ref_name, 'develop_') && steps.check_next_develop_exists.outputs.next_develop_branch }}
         run: |
-          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep -E 'develop_[0-9]{8}' | sort | head -n 1)
-          echo "oldest_develop_branch=${branch:-develop}" >> "$GITHUB_OUTPUT"
+          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep 'develop_[0-9]\{8\}' | sort | head -n 1)
+          echo "oldest_develop_branch=$branch" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
       - name: check if to release-stg01 exists
@@ -145,7 +145,7 @@ jobs:
         id: get_oldest_develop_branch
         if: ${{ github.ref_name == 'release-prd' }}
         run: |
-          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep -E 'develop_[0-9]{8}' | sort | head -n 1)
+          branch=$(git branch -a -r --list 'origin/develop_*' | sed -e 's/.*origin\///' | grep 'develop_[0-9]\{8\}' | sort | head -n 1)
           echo "oldest_develop_branch=${branch:-develop}" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.BUNDLE_GITHUB__COM }}
